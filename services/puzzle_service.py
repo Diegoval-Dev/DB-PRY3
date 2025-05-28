@@ -1,7 +1,8 @@
 # services/puzzle_service.py
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from bson import ObjectId
+from datetime import datetime
 
 from database.repositories import (
     create_puzzle       as repo_create_puzzle,
@@ -27,7 +28,7 @@ def add_puzzle(
         "name": name,
         "totalPieces": totalPieces,
         "sectors": sectors,
-        "createdAt": None  # MongoDB asigna la fecha automáticamente si lo configuras, o bien lo puedes llenar aquí
+        "createdAt": datetime.now()  # Usamos la fecha actual
     }
     created = repo_create_puzzle(doc)
     return Puzzle(**created)
@@ -40,12 +41,12 @@ def get_puzzle(puzzle_id: str) -> Optional[Puzzle]:
 def list_puzzles() -> List[Puzzle]:
     """Lista todos los puzzles."""
     raws = repo_list_puzzles()
-    return [Puzzle(**r) for r in raws]
+    return [Puzzle(**_prepare_document(r)) for r in raws]
 
 def update_puzzle_info(puzzle_id: str, update_data: dict) -> Optional[Puzzle]:
     """Actualiza campos de un puzzle."""
     updated = repo_update_puzzle(puzzle_id, update_data)
-    return Puzzle(**updated) if updated else None
+    return Puzzle(**_prepare_document(updated)) if updated else None
 
 def remove_puzzle(puzzle_id: str) -> bool:
     """Elimina un puzzle."""
@@ -78,7 +79,7 @@ def add_piece(
         ]
     }
     created = repo_create_piece(doc)
-    return Piece(**created)
+    return Piece(**_prepare_document(created))
 
 def get_piece(
     puzzle_id: str,
@@ -86,12 +87,12 @@ def get_piece(
 ) -> Optional[Piece]:
     """Recupera una pieza por su código dentro de un puzzle."""
     raw = repo_get_piece_by_code(puzzle_id, code)
-    return Piece(**raw) if raw else None
+    return Piece(**_prepare_document(raw)) if raw else None
 
 def list_pieces(puzzle_id: str) -> List[Piece]:
     """Lista todas las piezas de un puzzle."""
     raws = repo_list_pieces(puzzle_id)
-    return [Piece(**r) for r in raws]
+    return [Piece(**_prepare_document(r)) for r in raws]
 
 def update_piece_info(
     piece_id: str,
@@ -99,4 +100,37 @@ def update_piece_info(
 ) -> Optional[Piece]:
     """Actualiza campos de una pieza."""
     updated = repo_update_piece(piece_id, update_data)
-    return Piece(**updated) if updated else None
+    return Piece(**_prepare_document(updated)) if updated else None
+
+# ─── U T I L I T I E S ────────────────────────────────────────────────────────
+
+def _prepare_document(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Prepara un documento de MongoDB para ser convertido a un modelo Pydantic.
+    - Convierte ObjectId a string
+    - Asegura que valores como createdAt tengan valores válidos
+    """
+    if not doc:
+        return {}
+    
+    result = dict(doc)
+    
+    # Convertir _id de ObjectId a string
+    if '_id' in result and isinstance(result['_id'], ObjectId):
+        result['_id'] = str(result['_id'])
+    
+    # Convertir puzzleId de ObjectId a string si existe
+    if 'puzzleId' in result and isinstance(result['puzzleId'], ObjectId):
+        result['puzzleId'] = str(result['puzzleId'])
+    
+    # Asegurar que createdAt tenga un valor válido
+    if 'createdAt' in result and result['createdAt'] is None:
+        result['createdAt'] = datetime.now()
+    
+    # Procesar neighbors si existen
+    if 'neighbors' in result and result['neighbors']:
+        for neighbor in result['neighbors']:
+            if 'neighborPiece' in neighbor and isinstance(neighbor['neighborPiece'], ObjectId):
+                neighbor['neighborPiece'] = str(neighbor['neighborPiece'])
+    
+    return result
