@@ -132,10 +132,10 @@ puzzle_app/
 
 ## Anexos
 
-<img src="https://github.com/user-attachments/assets/56ff0641-9e61-4511-a5de-50d32132975e" width="400"/>
+<img src="https://github.com/user-attachments/assets/56ff0641-9e61-4511-a5de-50d32132975e" width="200"/>
 
-<img src="https://github.com/user-attachments/assets/c65c06e0-1c68-4869-809d-2ae932f5b2a2" width="400"/>
+<img src="https://github.com/user-attachments/assets/c65c06e0-1c68-4869-809d-2ae932f5b2a2" width="200"/>
 
-<img src="https://github.com/user-attachments/assets/baa864df-e963-41e5-a220-916b1f3147aa" width="400"/>
+<img src="https://github.com/user-attachments/assets/baa864df-e963-41e5-a220-916b1f3147aa" width="200"/>
 
 
