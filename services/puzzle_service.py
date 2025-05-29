@@ -54,32 +54,40 @@ def remove_puzzle(puzzle_id: str) -> bool:
 
 # ─── P I E C E S ───────────────────────────────────────────────────────────────
 
-def add_piece(
+def add_or_update_piece(
     puzzle_id: str,
     code: str,
     sector: str,
-    edges: List[dict],
-    neighbors: List[dict]
+    edges: list[dict],
+    neighbors: list[dict]
 ) -> Piece:
-    """Crea una pieza dentro de un puzzle."""
-    # Asegurar que el puzzle existe
-    if not repo_get_puzzle(puzzle_id):
-        raise ValueError(f"Puzzle {puzzle_id} no encontrado.")
+    """
+    Si la pieza (puzzleId+code) existe, la actualiza con los nuevos fields.
+    Si no existe, la crea.
+    """
+    # 1) Preparamos el documento _parcial_ de actualización/creación
     doc = {
         "puzzleId": ObjectId(puzzle_id),
         "code": code,
         "sector": sector,
         "edges": edges,
-        "neighbors": [
-            {
-                "edgeId": nb["edgeId"],
-                "neighborPiece": ObjectId(nb["neighborPiece"]) if nb["neighborPiece"] else None
-            }
-            for nb in neighbors
-        ]
+        "neighbors": neighbors
     }
+
+    # 2) ¿Ya existe esa pieza?
+    existing = repo_get_piece_by_code(puzzle_id, code)
+    if existing:
+        # update_piece espera id como str y un dict con los campos a settear
+        updated = repo_update_piece(str(existing["_id"]), {
+            "sector": sector,
+            "edges": edges,
+            "neighbors": neighbors
+        })
+        return Piece(**updated)
+
+    # 3) No existe → la creamos
     created = repo_create_piece(doc)
-    return Piece(**_prepare_document(created))
+    return Piece(**created)
 
 def get_piece(
     puzzle_id: str,

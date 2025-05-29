@@ -1,7 +1,7 @@
 # ui/map_piece.py
 
 import streamlit as st
-from services.puzzle_service import list_puzzles, add_piece, list_pieces
+from services.puzzle_service import list_puzzles, add_or_update_piece as add_piece, list_pieces
 from models.puzzle import Puzzle
 from models.piece import Piece
 
@@ -20,66 +20,81 @@ def run():
         format_func=lambda p: f"{p.name} (ID: {p.id})"
     )
 
-    # 2. Listado de piezas ya mapeadas
-    st.subheader("📋 Piezas mapeadas")
-    existing: list[Piece] = list_pieces(puzzle.id)
-    if existing:
-        for p in existing:
-            st.write(f"- Código: **{p.code}**, Sector: **{p.sector}**")
-    else:
-        st.info("Aún no has mapeado ninguna pieza para este puzzle.")
+    # Función para obtener y mostrar piezas existentes
+    def refresh_existing():
+        pieces = list_pieces(puzzle.id)
+        if pieces:
+            st.subheader("📋 Piezas mapeadas")
+            for p in pieces:
+                st.write(f"- Código: **{p.code}**, Sector: **{p.sector}**")
+        else:
+            st.info("Aún no has mapeado ninguna pieza para este puzzle.")
+        return pieces
+
+    existing: list[Piece] = refresh_existing()
 
     st.markdown("---")
     st.subheader("📝 Mapear nueva pieza")
+    
+    # Inicializar edge_count una sola vez
+    st.session_state.setdefault("edge_count", 1)
 
-    # 3. Formulario de mapeo
-    with st.form("map_piece_form", clear_on_submit=True):
+    # 2. Formulario de mapeo
+    with st.form("map_piece_form", clear_on_submit=False):
         code = st.text_input("Código de la pieza", help="Ejemplo: P1")
         sector = st.selectbox("Sector", puzzle.sectors)
 
-        # Para cada uno de los 4 bordes
-        edge_types: dict[int,str] = {}
+        # number_input con key para persistencia automática
+        edge_count = st.number_input(
+            "Número de conexiones",
+            min_value=1, max_value=6,
+            value=st.session_state.edge_count,
+            key="edge_count"
+        )
+
+        edge_types: dict[int, str] = {}
         edge_neighbors: dict[int, str] = {}
-        neighbor_options = ["NINGUNO"] + [p.code for p in existing]
 
-        for edge_id in (1, 2, 3, 4):
-            st.markdown(f"**Borde {edge_id}**")
-            edge_types[edge_id] = st.selectbox(
-                f"Tipo en borde {edge_id}",
+        for eid in range(1, edge_count + 1):
+            st.markdown(f"**Conexión {eid}**")
+            edge_types[eid] = st.selectbox(
+                f"Tipo de conexión {eid}",
                 ("hembra", "macho"),
-                key=f"type_{edge_id}"
+                key=f"type_{eid}"
             )
-            edge_neighbors[edge_id] = st.selectbox(
-                f"Vecino en borde {edge_id}",
-                neighbor_options,
-                key=f"neighbor_{edge_id}"
+            edge_neighbors[eid] = st.text_input(
+                f"Código de la pieza vecina para conexión {eid} (opcional)",
+                key=f"neighbor_{eid}"
             )
 
+        # Submit button dentro del form
         submitted = st.form_submit_button("➕ Guardar Pieza")
 
-    # 4. Procesar envío
+    # 3. Procesar envío y refetch
     if submitted:
         if not code:
             st.error("❌ Debes indicar el código de la pieza.")
-        else:
-            # Construir estructuras para add_piece
-            edges = [
-                {"edgeId": eid, "type": edge_types[eid]}
-                for eid in (1, 2, 3, 4)
-            ]
-            neighbors = []
-            for eid in (1, 2, 3, 4):
-                nb = edge_neighbors[eid]
-                neighbors.append({
-                    "edgeId": eid,
-                    "neighborPiece": nb if nb != "NINGUNO" else None
-                })
+            return
 
-            try:
-                piece: Piece = add_piece(puzzle.id, code, sector, edges, neighbors)
-                st.success(f"✔️ Pieza **{piece.code}** guardada correctamente.")
-            except Exception as e:
-                st.error(f"Error al guardar la pieza: {e}")
+        # Construir edges y neighbors usando el edge_count actual
+        edges = [
+            {"edgeId": eid, "type": edge_types[eid]}
+            for eid in range(1, edge_count + 1)
+        ]
+        neighbors = [
+            {
+                "edgeId": eid,
+                "neighborCode": (edge_neighbors[eid].strip() or None)
+            }
+            for eid in range(1, edge_count + 1)
+        ]
 
-            # Refrescar listado de piezas
-            existing = list_pieces(puzzle.id)
+        try:
+            piece: Piece = add_piece(puzzle.id, code, sector, edges, neighbors)
+            st.success(f"✔️ Pieza **{piece.code}** guardada correctamente.")
+        except Exception as e:
+            st.error(f"Error al guardar la pieza: {e}")
+
+        # Refrescar lista y reiniciar la app
+        refresh_existing()
+        st.experimental_rerun()

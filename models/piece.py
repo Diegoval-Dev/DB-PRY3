@@ -1,6 +1,6 @@
 # models/piece.py
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from bson import ObjectId
 
@@ -10,21 +10,21 @@ class Edge(BaseModel):
 
 class Neighbor(BaseModel):
     edgeId: int
-    neighborPiece: Optional[str]  # ObjectId como str o None
+    neighborCode: Optional[str]  # código de la pieza vecina, o None
 
 class Piece(BaseModel):
-    """
-    Representa el documento de la colección `pieces`.
-    """
-    id: str = Field(None, alias="_id")
+    id: str = Field(default=None, alias="_id")
     puzzleId: str
     code: str
     sector: str
     edges: List[Edge]
     neighbors: List[Neighbor]
 
+    @field_validator("id", "puzzleId", mode="before")
+    def objectid_to_str(cls, v):
+        if isinstance(v, ObjectId):
+            return str(v)
+        return v
+
     class Config:
         allow_population_by_field_name = True
-        json_encoders = {
-            ObjectId: lambda oid: str(oid),
-        }

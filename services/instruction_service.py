@@ -1,60 +1,51 @@
 # services/instruction_service.py
 
-from typing import List, Dict, Set
-from services.puzzle_service import get_piece, list_pieces
+from typing import List, Set
+from services.puzzle_service import list_pieces
 from models.piece import Piece
-
-# Mapeo de edgeId a nombre de dirección
-EDGE_DIRECTION: Dict[int, str] = {
-    1: "norte",
-    2: "este",
-    3: "sur",
-    4: "oeste"
-}
 
 def generate_instructions(puzzle_id: str, start_code: str) -> List[str]:
     """
-    Genera instrucciones atómicas para armar el puzzle,
-    recorriendo las piezas desde start_code en profundidad (DFS).
+    Genera instrucciones atómicas para armar el puzzle:
+    1) Explica cómo numerar las uniones de la pieza base.
+    2) Recorre el grafo de vecinos y emite 'Une la pieza X a la Conexión k de Y.'
     """
-    # Obtiene todas las piezas y construye mapas auxiliares
-    pieces: List[Piece] = list_pieces(puzzle_id)
-    code_map: Dict[str, Piece] = {p.code: p for p in pieces}
-    id_map:   Dict[str, str]   = {p.id:   p.code for p in pieces}
+
+    pieces = list_pieces(puzzle_id)
+    code_map = {p.code: p for p in pieces}
 
     if start_code not in code_map:
         raise ValueError(f"Pieza de inicio '{start_code}' no encontrada en el puzzle.")
 
-    visited: Set[str] = set()
     instructions: List[str] = []
+    visited: Set[str] = set()
+
+    # Instrucción inicial sin numerar
+    instructions.append(
+        "Coloca la pieza **{0}** sobre la mesa con la etiqueta en la parte superior, orientada hacia el norte.".format(start_code)
+    )
+    instructions.append(
+        "Imagina que recorres el contorno de la pieza en el sentido de las agujas del reloj; numera cada punto de unión que encuentres: "
+        "la primera será **Conexión 1**, la siguiente **Conexión 2**, y así sucesivamente."
+    )
 
     def dfs(current_code: str):
         visited.add(current_code)
-        current_piece = code_map[current_code]
+        current_piece: Piece = code_map[current_code]
 
-        for neighbor in current_piece.neighbors:
-            edge = neighbor.edgeId
-            neighbor_id = neighbor.neighborPiece
-
-            # Si no hay pieza (hueco), lo omitimos
-            if not neighbor_id:
+        for nb in current_piece.neighbors:
+            k = nb.edgeId
+            neighbor = nb.neighborCode
+            if not neighbor or neighbor in visited:
                 continue
 
-            # Traducir ObjectId (str) a código legible
-            neighbor_code = id_map.get(neighbor_id)
-            if not neighbor_code or neighbor_code in visited:
-                continue
-
-            direction = EDGE_DIRECTION.get(edge, f"borde {edge}")
-            # Instrucción atómica
             instructions.append(
-                f"Une la pieza {neighbor_code} al {direction} de {current_code}."
+                "Une la pieza **{0}** a la Conexión **{1}** de **{2}**. "
+                "Para ello, coloca {0} junto a {2}, orientando su propia Conexión {1} de modo que encaje perfectamente.".format(
+                    neighbor, k, current_code
+                )
             )
-            # Recursión
-            dfs(neighbor_code)
+            dfs(neighbor)
 
-    # Paso 1: colocar pieza base
-    instructions.append(f"Coloca la pieza {start_code} como base.")
     dfs(start_code)
-
     return instructions

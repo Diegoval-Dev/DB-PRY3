@@ -1,24 +1,23 @@
 # models/puzzle.py
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 from datetime import datetime
 from bson import ObjectId
 
 class Puzzle(BaseModel):
-    """
-    Representa el documento de la colección `puzzles`.
-    """
-    id: str = Field(None, alias="_id")
+    id: str = Field(default=None, alias="_id")
     name: str
     totalPieces: int
     sectors: List[str]
     createdAt: datetime
 
+    @field_validator("id", mode="before")
+    def objectid_to_str(cls, v):
+        if isinstance(v, ObjectId):
+            return str(v)
+        return v
+
     class Config:
-        # Permite usar el alias "_id" y convertir ObjectId a str automáticamente
         allow_population_by_field_name = True
-        json_encoders = {
-            ObjectId: lambda oid: str(oid),
-            datetime: lambda dt: dt.isoformat(),
-        }
+        json_encoders = { ObjectId: lambda oid: str(oid) }
