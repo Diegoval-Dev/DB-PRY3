@@ -1,3 +1,11 @@
+"""
+Configuración global del proyecto.
+
+Carga las variables de entorno definidas en el archivo .env y valida
+que las obligatorias estén presentes (MONGO_URI, DB_NAME).
+También define el nivel de logging por defecto.
+"""
+
 import os
 from dotenv import load_dotenv
 

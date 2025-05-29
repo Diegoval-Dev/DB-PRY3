@@ -1,5 +1,10 @@
 # ui/create_puzzle.py
+"""
+Interfaz Streamlit para la creación de nuevos puzzles.
 
+Permite ingresar el nombre, número total de piezas y sectores.
+Lista puzzles ya existentes.
+"""
 import streamlit as st
 from services.puzzle_service import add_puzzle, list_puzzles
 from models.puzzle import Puzzle

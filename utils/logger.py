@@ -1,4 +1,10 @@
 # utils/logger.py
+"""
+Configuración del sistema de logging.
+
+Permite obtener loggers personalizados con formato estandarizado
+usando el nivel definido en las variables de entorno.
+"""
 
 import logging
 from configs.config import LOG_LEVEL

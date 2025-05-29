@@ -1,4 +1,9 @@
 # ui/display_instructions.py
+"""
+Interfaz Streamlit para visualizar las instrucciones de armado.
+
+Permite elegir la pieza inicial y muestra instrucciones generadas paso a paso.
+"""
 
 import streamlit as st
 from services.puzzle_service import list_puzzles, list_pieces

@@ -1,5 +1,10 @@
 # services/instruction_service.py
+"""
+Generación de instrucciones de armado de puzzles.
 
+Requiere un puzzle y una pieza inicial para recorrer el grafo de vecinos
+y generar pasos secuenciales de ensamblaje.
+"""
 from typing import List, Set
 from services.puzzle_service import list_pieces
 from models.piece import Piece

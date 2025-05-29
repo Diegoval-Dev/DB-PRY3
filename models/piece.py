@@ -1,4 +1,9 @@
 # models/piece.py
+"""
+Modelo de datos para una Pieza del rompecabezas.
+
+Incluye validación de campos como código, sector, tipo de bordes y conexiones vecinas.
+"""
 
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional

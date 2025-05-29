@@ -1,4 +1,10 @@
 # utils/traversal.py
+"""
+Funciones de recorrido de piezas (DFS) sobre un grafo de rompecabezas.
+
+`dfs_traverse()` permite recorrer piezas desde una inicial y aplicar lógica personalizada
+al visitar cada conexión entre piezas.
+"""
 
 from typing import Dict, List, Set, Optional
 from models.piece import Piece

@@ -1,4 +1,10 @@
 # models/puzzle.py
+"""
+Modelo de datos para un Puzzle.
+
+Incluye campos como nombre, total de piezas, sectores definidos y fecha de creación.
+Convierte ObjectId a string para compatibilidad con Streamlit.
+"""
 
 from pydantic import BaseModel, Field, field_validator
 from typing import List

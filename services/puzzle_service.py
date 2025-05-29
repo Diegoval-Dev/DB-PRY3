@@ -1,5 +1,10 @@
 # services/puzzle_service.py
+"""
+Servicios relacionados con los puzzles y piezas.
 
+Funciones de alto nivel que gestionan los datos del puzzle,
+abstrayendo la lógica de acceso a la base de datos.
+"""
 from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from datetime import datetime

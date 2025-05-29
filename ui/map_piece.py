@@ -1,4 +1,9 @@
 # ui/map_piece.py
+"""
+Interfaz Streamlit para mapear piezas a un puzzle existente.
+
+Incluye selección del puzzle, definición de conexiones (edges) y vecinos (neighbors).
+"""
 
 import streamlit as st
 from services.puzzle_service import list_puzzles, add_or_update_piece as add_piece, list_pieces
